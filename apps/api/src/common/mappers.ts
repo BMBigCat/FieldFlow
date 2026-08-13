@@ -2,6 +2,13 @@ import type {
   Customer,
   CustomerNote,
   Equipment,
+  Job,
+  JobAssignment,
+  JobNote,
+  JobPhoto,
+  JobPriority,
+  JobStatus,
+  JobType,
   Organization,
   ServiceAddress,
   User,
@@ -143,5 +150,105 @@ export function toCustomerNote(row: CustomerNoteRow): CustomerNote {
     authorId: row.author_id,
     body: row.body,
     createdAt: row.created_at,
+  };
+}
+
+interface JobRow {
+  id: string;
+  org_id: string;
+  customer_id: string;
+  service_address_id: string;
+  equipment_id: string | null;
+  type: JobType;
+  status: JobStatus;
+  priority: JobPriority;
+  description: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  created_by: string;
+  created_at: string;
+  local_version: number;
+  updated_at: string;
+}
+
+interface JobAssignmentRow {
+  id: string;
+  job_id: string;
+  technician_id: string;
+  assigned_at: string;
+}
+
+interface JobNoteRow {
+  id: string;
+  job_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  client_generated_id: string;
+}
+
+interface JobPhotoRow {
+  id: string;
+  job_id: string;
+  storage_path: string;
+  caption: string | null;
+  uploaded_by: string;
+  uploaded_at: string;
+  client_generated_id: string;
+}
+
+export function toJob(row: JobRow): Job {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    customerId: row.customer_id,
+    serviceAddressId: row.service_address_id,
+    equipmentId: row.equipment_id,
+    type: row.type,
+    status: row.status,
+    priority: row.priority,
+    description: row.description,
+    scheduledStart: row.scheduled_start,
+    scheduledEnd: row.scheduled_end,
+    actualStart: row.actual_start,
+    actualEnd: row.actual_end,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    localVersion: row.local_version,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function toJobAssignment(row: JobAssignmentRow): JobAssignment {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    technicianId: row.technician_id,
+    assignedAt: row.assigned_at,
+  };
+}
+
+export function toJobNote(row: JobNoteRow): JobNote {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    authorId: row.author_id,
+    body: row.body,
+    createdAt: row.created_at,
+    clientGeneratedId: row.client_generated_id,
+  };
+}
+
+export function toJobPhoto(row: JobPhotoRow): JobPhoto {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    storagePath: row.storage_path,
+    caption: row.caption,
+    uploadedBy: row.uploaded_by,
+    uploadedAt: row.uploaded_at,
+    clientGeneratedId: row.client_generated_id,
   };
 }

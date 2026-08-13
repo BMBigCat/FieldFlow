@@ -1,4 +1,6 @@
 import type { ISODateString, UUID } from "./common.js";
+import type { Customer, Equipment, ServiceAddress } from "./customer.js";
+import type { User } from "./user.js";
 
 /** Build plan §2 core feature list. */
 export type JobType =
@@ -81,6 +83,54 @@ export interface JobSignature {
   storagePath: string;
   signedByName: string;
   signedAt: ISODateString;
+}
+
+/** GET /jobs — lightweight enough for calendar/list rendering, includes
+ * which technician(s) are assigned so cards can be placed without an N+1
+ * detail fetch per job. */
+export interface JobListItem extends Job {
+  technicianIds: UUID[];
+}
+
+/** POST /jobs */
+export interface CreateJobRequest {
+  customerId: UUID;
+  serviceAddressId: UUID;
+  equipmentId?: UUID;
+  type: JobType;
+  priority?: JobPriority;
+  description?: string;
+  scheduledStart?: ISODateString;
+  scheduledEnd?: ISODateString;
+  /** Initial assignment(s); creates the job_assignments rows in the same call. */
+  technicianIds?: UUID[];
+}
+
+/** PATCH /jobs/:id — technicianIds, when present, replaces the full assignment set. */
+export interface UpdateJobRequest {
+  status?: JobStatus;
+  priority?: JobPriority;
+  description?: string;
+  scheduledStart?: ISODateString;
+  scheduledEnd?: ISODateString;
+  actualStart?: ISODateString;
+  actualEnd?: ISODateString;
+  technicianIds?: UUID[];
+}
+
+/** POST /jobs/:id/notes */
+export interface CreateJobNoteRequest {
+  body: string;
+}
+
+/** GET /jobs/:id — everything the detail page needs in one call. */
+export interface JobDetail extends Job {
+  customer: Pick<Customer, "id" | "name">;
+  serviceAddress: ServiceAddress;
+  equipment: Equipment | null;
+  assignedTechnicians: Pick<User, "id" | "fullName">[];
+  notes: JobNote[];
+  photos: JobPhoto[];
 }
 
 /** Build plan §4 `recurring_maintenance_plans`. */

@@ -5,8 +5,11 @@ import { CustomerDetailPage } from "./routes/CustomerDetailPage";
 import { CustomersListPage } from "./routes/CustomersListPage";
 import { DashboardHome } from "./routes/DashboardHome";
 import { DashboardLayout } from "./routes/DashboardLayout";
+import { JobDetailPage } from "./routes/JobDetailPage";
+import { JobsCalendarPage } from "./routes/JobsCalendarPage";
 import { LoginPage } from "./routes/LoginPage";
 import { NewCustomerPage } from "./routes/NewCustomerPage";
+import { NewJobPage } from "./routes/NewJobPage";
 import { OrganizationSettingsPage } from "./routes/OrganizationSettingsPage";
 
 export default function App() {
@@ -22,6 +25,9 @@ export default function App() {
               <Route path="/customers" element={<CustomersListPage />} />
               <Route path="/customers/new" element={<NewCustomerPage />} />
               <Route path="/customers/:id" element={<CustomerDetailPage />} />
+              <Route path="/jobs" element={<JobsCalendarPage />} />
+              <Route path="/jobs/new" element={<NewJobPage />} />
+              <Route path="/jobs/:id" element={<JobDetailPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
