@@ -227,31 +227,33 @@ Notifications
 
 ## 8. Phased Build Plan
 
-### Phase 0 — Project Scaffolding
-- [ ] Monorepo: `apps/api`, `apps/web`, `apps/mobile`, `packages/shared-types`, `packages/invoicing-core`
-- [ ] NestJS API boilerplate, connected to Supabase Postgres
-- [ ] Supabase project created; email/password auth configured
-- [ ] CI: lint + typecheck + test on push
-- [ ] `Job`/`Customer`/`Invoice` types defined in `shared-types`, imported by api + web
-- **Acceptance:** API boots locally, connects to DB, health-check endpoint responds; shared types compile and are imported in both `api` and `web`.
+### Phase 0 — Project Scaffolding ✅ DONE
+- [x] Monorepo: `apps/api`, `apps/web`, `apps/mobile`, `packages/shared-types`, `packages/invoicing-core`
+- [x] NestJS API boilerplate, connected to Supabase Postgres
+- [x] Supabase project created; email/password auth configured
+- [x] CI: lint + typecheck + test on push
+- [x] `Job`/`Customer`/`Invoice` types defined in `shared-types`, imported by api + web
+- **Acceptance:** API boots locally, connects to DB, health-check endpoint responds; shared types compile and are imported in both `api` and `web`. — **verified against live Supabase project.**
 
-### Phase 1 — Auth & Org/Role Foundation
-- [ ] Signup/login, org creation, role assignment (admin/office/technician)
-- [ ] RLS policies: org-scoped, role-scoped
-- [ ] `whoami`/permissions endpoint
-- [ ] Org branding settings: logo upload (Supabase Storage), display name, brand color (see Section 2a)
-- **Acceptance:** admin logs in, invites an office user and a technician, each sees a correctly restricted response from the permissions endpoint. Admin uploads a logo and sets a display name; it renders on the web dashboard header.
+### Phase 1 — Auth & Org/Role Foundation ✅ DONE
+- [x] Signup/login, org creation, role assignment (admin/office/technician)
+- [x] RLS policies: org-scoped, role-scoped
+- [x] `whoami`/permissions endpoint
+- [x] Org branding settings: logo upload (Supabase Storage), display name, brand color (see Section 2a)
+- **Acceptance:** admin logs in, invites an office user and a technician, each sees a correctly restricted response from the permissions endpoint. Admin uploads a logo and sets a display name; it renders on the web dashboard header. — **verified end-to-end (scripted + browser) against the live Supabase project.**
 
-### Phase 2 — Customer Database
-- [ ] CRUD: customers, service addresses, equipment, customer notes
-- [ ] Web: customer list + detail page (contact info, addresses, equipment, notes, service history placeholder)
-- **Acceptance:** office user creates a customer, adds an address, adds equipment, adds a note, sees it all on the detail page. Full test coverage on customer endpoints.
+### Phase 2 — Customer Database ✅ DONE
+- [x] CRUD: customers, service addresses, equipment, customer notes
+- [x] Web: customer list + detail page (contact info, addresses, equipment, notes, service history placeholder)
+- **Acceptance:** office user creates a customer, adds an address, adds equipment, adds a note, sees it all on the detail page. Full test coverage on customer endpoints. — **verified end-to-end (scripted + browser).**
 
-### Phase 3 — Job Management & Scheduling (Web)
-- [ ] CRUD: jobs (all 4 types), technician assignment
-- [ ] Calendar view (day + week), drag-and-drop reschedule/reassign
-- [ ] Job detail page: notes, photo upload, status transitions
-- **Acceptance:** office user creates a job, assigns a tech, sees it on the calendar, drags to reschedule, walks it through the full status lifecycle.
+### Phase 3 — Job Management & Scheduling (Web) ✅ DONE
+- [x] CRUD: jobs (all 4 types), technician assignment
+- [x] Calendar view (day + week), drag-and-drop reschedule/reassign
+- [x] Job detail page: notes, photo upload, status transitions
+- **Acceptance:** office user creates a job, assigns a tech, sees it on the calendar, drags to reschedule, walks it through the full status lifecycle. — **verified end-to-end (scripted + browser), including the double-booking conflict warning.**
+
+### ⏭ Next up: Phase 4 — Technician Mobile App (Expo, offline-first)
 
 ### Phase 4 — Technician Mobile App (with Offline Mode built in from the start)
 - [ ] Expo app scaffold, login, "my day" schedule view
