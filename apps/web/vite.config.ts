@@ -13,6 +13,9 @@ export default defineConfig({
       "@": path.resolve(dirname, "./src"),
     },
   },
+  // Repo-root .env holds the values (VITE_-prefixed ones included) so we
+  // don't duplicate secrets across a second apps/web/.env file.
+  envDir: path.resolve(dirname, "../.."),
   server: {
     port: 5173,
   },
