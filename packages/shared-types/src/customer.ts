@@ -45,3 +45,47 @@ export interface CustomerNote {
   body: string;
   createdAt: ISODateString;
 }
+
+/** POST /customers */
+export interface CreateCustomerRequest {
+  name: string;
+  phone?: string;
+  email?: string;
+  billingAddress?: string;
+}
+
+/** PATCH /customers/:id */
+export type UpdateCustomerRequest = Partial<CreateCustomerRequest>;
+
+/** POST /customers/:id/addresses */
+export interface CreateServiceAddressRequest {
+  label?: string;
+  address: string;
+  lat?: number;
+  lng?: number;
+}
+
+/** POST /customers/:id/equipment */
+export interface CreateEquipmentRequest {
+  serviceAddressId: UUID;
+  type: string;
+  make?: string;
+  model?: string;
+  serialNumber?: string;
+  installDate?: ISODateString;
+  warrantyExpires?: ISODateString;
+  filterSize?: string;
+  notes?: string;
+}
+
+/** POST /customers/:id/notes */
+export interface CreateCustomerNoteRequest {
+  body: string;
+}
+
+/** GET /customers/:id — everything the detail page needs in one call. */
+export interface CustomerDetail extends Customer {
+  serviceAddresses: ServiceAddress[];
+  equipment: Equipment[];
+  notes: CustomerNote[];
+}

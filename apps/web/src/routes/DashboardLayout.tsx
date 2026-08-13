@@ -40,6 +40,11 @@ export function DashboardLayout() {
           </span>
         </div>
         <nav className="flex items-center gap-4 text-sm">
+          {(user?.role === "admin" || user?.role === "office") && (
+            <Link to="/customers" className="text-muted-foreground hover:text-foreground">
+              Customers
+            </Link>
+          )}
           {user?.role === "admin" && (
             <Link to="/settings/organization" className="text-muted-foreground hover:text-foreground">
               Organization Settings
