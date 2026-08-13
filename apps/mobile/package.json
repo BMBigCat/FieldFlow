@@ -1,0 +1,10 @@
+{
+  "name": "@fieldflow/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "echo \"apps/mobile: nothing to lint yet\" && exit 0",
+    "typecheck": "echo \"apps/mobile: nothing to typecheck yet\" && exit 0",
+    "test": "echo \"apps/mobile: nothing to test yet\" && exit 0"
+  }
+}
