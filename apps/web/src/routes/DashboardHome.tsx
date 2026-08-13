@@ -5,11 +5,11 @@ export function DashboardHome() {
   const { whoami } = useOutletContext<{ whoami?: WhoAmIResponse }>();
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">
+    <div className="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground">
         Welcome{whoami ? `, ${whoami.user.fullName}` : ""}
       </h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-muted-foreground">
         Phase 1 scaffold — customer/job management arrives in later phases.
       </p>
     </div>

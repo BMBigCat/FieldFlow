@@ -76,15 +76,15 @@ export function OrganizationSettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Branding</h2>
+      <section className="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground">Branding</h2>
         <form onSubmit={handleBrandingSubmit} className="mt-4 space-y-4">
           <div className="flex items-center gap-4">
             {orgQuery.data?.logoUrl && (
               <img src={orgQuery.data.logoUrl} alt="" className="h-12 w-12 rounded object-cover" />
             )}
             <label className="text-sm">
-              <span className="block font-medium text-slate-700">Logo</span>
+              <span className="block font-medium text-foreground">Logo</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -97,18 +97,18 @@ export function OrganizationSettingsPage() {
             </label>
           </div>
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="displayName" className="block text-sm font-medium text-foreground">
               Display name
             </label>
             <input
               id="displayName"
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             />
           </div>
           <div>
-            <label htmlFor="brandColor" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="brandColor" className="block text-sm font-medium text-foreground">
               Brand color
             </label>
             <input
@@ -116,24 +116,24 @@ export function OrganizationSettingsPage() {
               type="color"
               value={brandColor}
               onChange={(event) => setBrandColor(event.target.value)}
-              className="mt-1 h-9 w-16 rounded border border-slate-300"
+              className="mt-1 h-9 w-16 rounded border border-input bg-background"
             />
           </div>
           <button
             type="submit"
             disabled={updateOrgMutation.isPending}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {updateOrgMutation.isPending ? "Saving…" : "Save branding"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Invite a teammate</h2>
+      <section className="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground">Invite a teammate</h2>
         <form onSubmit={handleInviteSubmit} className="mt-4 space-y-4">
           <div>
-            <label htmlFor="inviteFullName" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="inviteFullName" className="block text-sm font-medium text-foreground">
               Full name
             </label>
             <input
@@ -141,11 +141,11 @@ export function OrganizationSettingsPage() {
               required
               value={inviteFullName}
               onChange={(event) => setInviteFullName(event.target.value)}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             />
           </div>
           <div>
-            <label htmlFor="inviteEmail" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="inviteEmail" className="block text-sm font-medium text-foreground">
               Email
             </label>
             <input
@@ -154,18 +154,18 @@ export function OrganizationSettingsPage() {
               required
               value={inviteEmail}
               onChange={(event) => setInviteEmail(event.target.value)}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             />
           </div>
           <div>
-            <label htmlFor="inviteRole" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="inviteRole" className="block text-sm font-medium text-foreground">
               Role
             </label>
             <select
               id="inviteRole"
               value={inviteRole}
               onChange={(event) => setInviteRole(event.target.value as UserRole)}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             >
               {ROLE_OPTIONS.map((role) => (
                 <option key={role} value={role}>
@@ -177,16 +177,16 @@ export function OrganizationSettingsPage() {
           <button
             type="submit"
             disabled={inviteMutation.isPending}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {inviteMutation.isPending ? "Inviting…" : "Send invite"}
           </button>
           {inviteMutation.isError && (
-            <p className="text-sm text-red-600">{(inviteMutation.error as Error).message}</p>
+            <p className="text-sm text-destructive">{(inviteMutation.error as Error).message}</p>
           )}
         </form>
         {lastInvite && (
-          <p className="mt-4 break-all rounded-md bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="mt-4 break-all rounded-md bg-muted p-3 text-xs text-muted-foreground">
             No email provider is wired up yet (Phase 5) — share this link with {lastInvite.user.fullName} to set
             their password: {lastInvite.actionLink}
           </p>
