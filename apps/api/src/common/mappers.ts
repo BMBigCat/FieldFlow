@@ -7,7 +7,9 @@ import type {
   JobNote,
   JobPhoto,
   JobPriority,
+  JobSignature,
   JobStatus,
+  JobTimeEntry,
   JobType,
   Organization,
   ServiceAddress,
@@ -250,5 +252,47 @@ export function toJobPhoto(row: JobPhotoRow): JobPhoto {
     uploadedBy: row.uploaded_by,
     uploadedAt: row.uploaded_at,
     clientGeneratedId: row.client_generated_id,
+  };
+}
+
+interface JobSignatureRow {
+  id: string;
+  job_id: string;
+  storage_path: string;
+  signed_by_name: string;
+  signed_at: string;
+  client_generated_id: string;
+}
+
+interface JobTimeEntryRow {
+  id: string;
+  job_id: string;
+  technician_id: string;
+  clock_in_at: string;
+  clock_out_at: string | null;
+  client_generated_id: string;
+  created_at: string;
+}
+
+export function toJobSignature(row: JobSignatureRow): JobSignature {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    storagePath: row.storage_path,
+    signedByName: row.signed_by_name,
+    signedAt: row.signed_at,
+    clientGeneratedId: row.client_generated_id,
+  };
+}
+
+export function toJobTimeEntry(row: JobTimeEntryRow): JobTimeEntry {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    technicianId: row.technician_id,
+    clockInAt: row.clock_in_at,
+    clockOutAt: row.clock_out_at,
+    clientGeneratedId: row.client_generated_id,
+    createdAt: row.created_at,
   };
 }

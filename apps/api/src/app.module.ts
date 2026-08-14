@@ -6,6 +6,7 @@ import { HealthModule } from "./health/health.module";
 import { JobsModule } from "./jobs/jobs.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
 import { SupabaseModule } from "./supabase/supabase.module";
+import { SyncModule } from "./sync/sync.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -21,6 +22,7 @@ import { UsersModule } from "./users/users.module";
     CustomersModule,
     UsersModule,
     JobsModule,
+    SyncModule,
   ],
 })
 export class AppModule {}

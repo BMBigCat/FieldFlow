@@ -6,7 +6,7 @@ import type { RequestUser } from "../auth/request-user";
 
 function makeQueryBuilder(result: { data: unknown; error: unknown }) {
   const builder: Record<string, unknown> = {};
-  for (const method of ["select", "insert", "update", "delete", "eq", "order", "gte", "lte"]) {
+  for (const method of ["select", "insert", "update", "delete", "eq", "order", "gte", "lte", "is", "limit"]) {
     builder[method] = jest.fn().mockReturnValue(builder);
   }
   builder.single = jest.fn().mockResolvedValue(result);
@@ -278,5 +278,114 @@ describe("JobsService", () => {
         originalname: "photo.jpg",
       } as Express.Multer.File),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it("addSignature uploads and saves the resulting public URL", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    const bucket = {
+      upload: jest.fn().mockResolvedValue({ error: null }),
+      getPublicUrl: jest
+        .fn()
+        .mockReturnValue({ data: { publicUrl: "https://example.test/job-signatures/org-1/job-1/signature-1.png" } }),
+    };
+    storageFromMock.mockReturnValue(bucket);
+    const insertBuilder = makeQueryBuilder({
+      data: {
+        id: "s-1",
+        job_id: "job-1",
+        storage_path: "https://example.test/job-signatures/org-1/job-1/signature-1.png",
+        signed_by_name: "Jane Doe",
+        signed_at: "2026-01-02T00:00:00Z",
+        client_generated_id: "cg-1",
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(insertBuilder);
+
+    const result = await service.addSignature(
+      requestUser,
+      "job-1",
+      { mimetype: "image/png", buffer: Buffer.from("sig-bytes"), originalname: "sig.png" } as Express.Multer.File,
+      { signedByName: "Jane Doe" },
+    );
+
+    expect(bucket.upload).toHaveBeenCalled();
+    expect(result.signedByName).toBe("Jane Doe");
+  });
+
+  it("clockIn creates a new time entry when none is open", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: [], error: null })); // no open entries
+    const insertBuilder = makeQueryBuilder({
+      data: {
+        id: "te-1",
+        job_id: "job-1",
+        technician_id: "user-1",
+        clock_in_at: "2026-01-02T08:00:00Z",
+        clock_out_at: null,
+        client_generated_id: "cg-1",
+        created_at: "2026-01-02T08:00:00Z",
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(insertBuilder);
+
+    const result = await service.clockIn(requestUser, "job-1", {});
+
+    expect(insertBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ job_id: "job-1", technician_id: "user-1" }),
+    );
+    expect(result.clockOutAt).toBeNull();
+  });
+
+  it("clockIn rejects a second concurrent session for the same technician", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: [{ client_generated_id: "other-cg" }], error: null }));
+
+    await expect(service.clockIn(requestUser, "job-1", { clientGeneratedId: "cg-1" })).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it("clockOut closes the technician's open entry", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "te-1", clock_out_at: null }, error: null }));
+    const updateBuilder = makeQueryBuilder({
+      data: {
+        id: "te-1",
+        job_id: "job-1",
+        technician_id: "user-1",
+        clock_in_at: "2026-01-02T08:00:00Z",
+        clock_out_at: "2026-01-02T12:00:00Z",
+        client_generated_id: "cg-1",
+        created_at: "2026-01-02T08:00:00Z",
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(updateBuilder);
+
+    const result = await service.clockOut(requestUser, "job-1", {});
+
+    expect(updateBuilder.update).toHaveBeenCalledWith(expect.objectContaining({ clock_out_at: expect.any(String) }));
+    expect(result.clockOutAt).toBe("2026-01-02T12:00:00Z");
+  });
+
+  it("clockOut is idempotent when the targeted entry is already closed", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    fromMock.mockReturnValueOnce(
+      makeQueryBuilder({ data: { id: "te-1", clock_out_at: "2026-01-02T12:00:00Z" }, error: null }),
+    );
+
+    const result = await service.clockOut(requestUser, "job-1", { clientGeneratedId: "cg-1" });
+
+    expect(result.clockOutAt).toBe("2026-01-02T12:00:00Z");
+    expect(fromMock).toHaveBeenCalledTimes(2); // no update call — already closed
+  });
+
+  it("clockOut throws BadRequestException when there's nothing to close", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: null, error: null })); // no open entry
+
+    await expect(service.clockOut(requestUser, "job-1", {})).rejects.toThrow(BadRequestException);
   });
 });

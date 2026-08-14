@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "C:\\Users\\TeamFreshwater-Clean\\AppData\\Roaming\\npm\\pnpm.CMD",
+      "runtimeArgs": ["--filter", "@fieldflow/web", "dev"],
+      "port": 5173
+    }
+  ]
+}

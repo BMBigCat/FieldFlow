@@ -253,6 +253,38 @@ export function JobDetailPage() {
           />
         </label>
       </section>
+
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground">Signatures</h3>
+        <div className="mt-2 flex flex-wrap gap-4">
+          {job.signatures.map((signature) => (
+            <div key={signature.id} className="text-center">
+              <img
+                src={signature.storagePath}
+                alt={`Signature of ${signature.signedByName}`}
+                className="h-16 w-32 rounded border border-border object-contain bg-white"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {signature.signedByName} — {new Date(signature.signedAt).toLocaleString()}
+              </p>
+            </div>
+          ))}
+          {job.signatures.length === 0 && <p className="text-sm text-muted-foreground">No signatures yet.</p>}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground">Clock in / out</h3>
+        <ul className="mt-2 space-y-1 text-sm">
+          {job.timeEntries.map((entry) => (
+            <li key={entry.id} className="text-foreground">
+              {new Date(entry.clockInAt).toLocaleString()} —{" "}
+              {entry.clockOutAt ? new Date(entry.clockOutAt).toLocaleString() : "still clocked in"}
+            </li>
+          ))}
+          {job.timeEntries.length === 0 && <li className="text-muted-foreground">No time entries yet.</li>}
+        </ul>
+      </section>
     </div>
   );
 }

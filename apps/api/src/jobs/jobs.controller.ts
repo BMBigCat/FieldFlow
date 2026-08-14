@@ -13,12 +13,16 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import type { Request } from "express";
-import type { Job, JobDetail, JobListItem, JobNote, JobPhoto } from "@fieldflow/shared-types";
+import type { Job, JobDetail, JobListItem, JobNote, JobPhoto, JobSignature, JobTimeEntry } from "@fieldflow/shared-types";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
+import { ClockInDto } from "./dto/clock-in.dto";
+import { ClockOutDto } from "./dto/clock-out.dto";
 import { CreateJobDto } from "./dto/create-job.dto";
 import { CreateJobNoteDto } from "./dto/create-job-note.dto";
+import { CreateJobPhotoDto } from "./dto/create-job-photo.dto";
+import { CreateJobSignatureDto } from "./dto/create-job-signature.dto";
 import { UpdateJobDto } from "./dto/update-job.dto";
 import { JobsService } from "./jobs.service";
 
@@ -66,7 +70,29 @@ export class JobsController {
     @Req() req: Request,
     @Param("id") id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateJobPhotoDto,
   ): Promise<JobPhoto> {
-    return this.jobsService.addPhoto(req.user!, id, file);
+    return this.jobsService.addPhoto(req.user!, id, file, dto);
+  }
+
+  @Post(":id/signature")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 8 * 1024 * 1024 } }))
+  addSignature(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateJobSignatureDto,
+  ): Promise<JobSignature> {
+    return this.jobsService.addSignature(req.user!, id, file, dto);
+  }
+
+  @Post(":id/clock-in")
+  clockIn(@Req() req: Request, @Param("id") id: string, @Body() dto: ClockInDto): Promise<JobTimeEntry> {
+    return this.jobsService.clockIn(req.user!, id, dto);
+  }
+
+  @Post(":id/clock-out")
+  clockOut(@Req() req: Request, @Param("id") id: string, @Body() dto: ClockOutDto): Promise<JobTimeEntry> {
+    return this.jobsService.clockOut(req.user!, id, dto);
   }
 }

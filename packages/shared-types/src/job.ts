@@ -76,13 +76,29 @@ export interface JobPhoto {
   clientGeneratedId: UUID;
 }
 
-/** Build plan §4 `job_signatures`. */
+/** Build plan §4 `job_signatures`. `clientGeneratedId` supports offline dedupe (§6). */
 export interface JobSignature {
   id: UUID;
   jobId: UUID;
   storagePath: string;
   signedByName: string;
   signedAt: ISODateString;
+  clientGeneratedId: UUID;
+}
+
+/**
+ * Build plan §4 `job_time_entries` (Phase 4 addition — one row per clock
+ * session, so multiple assigned technicians can clock in/out independently
+ * on the same job; see hvac-app-build-plan.md Phase 4 plan, decision D1).
+ */
+export interface JobTimeEntry {
+  id: UUID;
+  jobId: UUID;
+  technicianId: UUID;
+  clockInAt: ISODateString;
+  clockOutAt: ISODateString | null;
+  clientGeneratedId: UUID;
+  createdAt: ISODateString;
 }
 
 /** GET /jobs — lightweight enough for calendar/list rendering, includes
@@ -118,9 +134,42 @@ export interface UpdateJobRequest {
   technicianIds?: UUID[];
 }
 
-/** POST /jobs/:id/notes */
+/**
+ * POST /jobs/:id/notes. `clientGeneratedId`/`createdAt` are optional — set by
+ * the sync push path (§6) so an offline-captured note keeps its real
+ * authored time and survives retries; omitted by direct online callers
+ * (web), which get a server-minted id and `now()` as before.
+ */
 export interface CreateJobNoteRequest {
   body: string;
+  clientGeneratedId?: UUID;
+  createdAt?: ISODateString;
+}
+
+/** POST /jobs/:id/photos — fields alongside the multipart file. */
+export interface CreateJobPhotoRequest {
+  caption?: string;
+  clientGeneratedId?: UUID;
+  uploadedAt?: ISODateString;
+}
+
+/** POST /jobs/:id/signature — fields alongside the multipart file. */
+export interface CreateJobSignatureRequest {
+  signedByName: string;
+  clientGeneratedId?: UUID;
+  signedAt?: ISODateString;
+}
+
+/** POST /jobs/:id/clock-in */
+export interface ClockInRequest {
+  clientGeneratedId?: UUID;
+  clockInAt?: ISODateString;
+}
+
+/** POST /jobs/:id/clock-out */
+export interface ClockOutRequest {
+  clientGeneratedId?: UUID;
+  clockOutAt?: ISODateString;
 }
 
 /** GET /jobs/:id — everything the detail page needs in one call. */
@@ -131,6 +180,8 @@ export interface JobDetail extends Job {
   assignedTechnicians: Pick<User, "id" | "fullName">[];
   notes: JobNote[];
   photos: JobPhoto[];
+  signatures: JobSignature[];
+  timeEntries: JobTimeEntry[];
 }
 
 /** Build plan §4 `recurring_maintenance_plans`. */
