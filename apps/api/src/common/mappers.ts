@@ -2,6 +2,10 @@ import type {
   Customer,
   CustomerNote,
   Equipment,
+  Invoice,
+  InvoiceLineItem,
+  InvoiceLineItemKind,
+  InvoiceStatus,
   Job,
   JobAssignment,
   JobNote,
@@ -25,6 +29,7 @@ interface OrganizationRow {
   brand_primary_color: string | null;
   brand_updated_at: string | null;
   created_at: string;
+  default_labor_rate: number | null;
 }
 
 interface UserRow {
@@ -47,6 +52,7 @@ export function toOrganization(row: OrganizationRow): Organization {
     logoUrl: row.logo_url,
     brandPrimaryColor: row.brand_primary_color,
     brandUpdatedAt: row.brand_updated_at,
+    defaultLaborRate: row.default_labor_rate,
   };
 }
 
@@ -294,5 +300,57 @@ export function toJobTimeEntry(row: JobTimeEntryRow): JobTimeEntry {
     clockOutAt: row.clock_out_at,
     clientGeneratedId: row.client_generated_id,
     createdAt: row.created_at,
+  };
+}
+
+interface InvoiceRow {
+  id: string;
+  org_id: string;
+  customer_id: string;
+  job_id: string | null;
+  status: InvoiceStatus;
+  issued_at: string | null;
+  due_at: string | null;
+  total: number;
+  tax: number;
+  paid_at: string | null;
+  external_ref: string | null;
+  external_system: "quickbooks" | "xero" | null;
+}
+
+interface InvoiceLineItemRow {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  kind: InvoiceLineItemKind;
+}
+
+export function toInvoice(row: InvoiceRow): Invoice {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    customerId: row.customer_id,
+    jobId: row.job_id,
+    status: row.status,
+    issuedAt: row.issued_at,
+    dueAt: row.due_at,
+    total: row.total,
+    tax: row.tax,
+    paidAt: row.paid_at,
+    externalRef: row.external_ref,
+    externalSystem: row.external_system,
+  };
+}
+
+export function toInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
+  return {
+    id: row.id,
+    invoiceId: row.invoice_id,
+    description: row.description,
+    quantity: row.quantity,
+    unitPrice: row.unit_price,
+    kind: row.kind,
   };
 }

@@ -1,4 +1,4 @@
-import { IsHexColor, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsHexColor, IsNumber, IsOptional, IsString, Min, MaxLength } from "class-validator";
 import type { UpdateOrganizationRequest } from "@fieldflow/shared-types";
 
 export class UpdateOrganizationDto implements UpdateOrganizationRequest {
@@ -10,4 +10,9 @@ export class UpdateOrganizationDto implements UpdateOrganizationRequest {
   @IsOptional()
   @IsHexColor()
   brandPrimaryColor?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  defaultLaborRate?: number;
 }

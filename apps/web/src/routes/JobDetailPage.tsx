@@ -1,7 +1,16 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateJobNoteRequest, JobDetail, JobStatus, UpdateJobRequest, User } from "@fieldflow/shared-types";
+import type {
+  CreateInvoiceRequest,
+  CreateJobNoteRequest,
+  InvoiceDetail,
+  InvoiceListItem,
+  JobDetail,
+  JobStatus,
+  UpdateJobRequest,
+  User,
+} from "@fieldflow/shared-types";
 import { apiFetch } from "../lib/api";
 
 const STATUS_LABEL: Record<JobStatus, string> = {
@@ -16,6 +25,7 @@ const STATUS_LABEL: Record<JobStatus, string> = {
 export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const jobQuery = useQuery({
     queryKey: ["job", id],
@@ -24,6 +34,26 @@ export function JobDetailPage() {
   });
 
   const usersQuery = useQuery({ queryKey: ["users"], queryFn: () => apiFetch<User[]>("/users") });
+
+  const invoicesQuery = useQuery({
+    queryKey: ["invoices"],
+    queryFn: () => apiFetch<InvoiceListItem[]>("/invoices"),
+    enabled: jobQuery.data?.status === "invoiced",
+  });
+  const existingInvoice = invoicesQuery.data?.find((invoice) => invoice.jobId === id);
+
+  const generateInvoiceMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<InvoiceDetail>("/invoices", {
+        method: "POST",
+        body: JSON.stringify({ jobId: id ?? "" } satisfies CreateInvoiceRequest),
+      }),
+    onSuccess: (invoice) => {
+      queryClient.invalidateQueries({ queryKey: ["job", id] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      navigate(`/invoices/${invoice.id}`);
+    },
+  });
   const technicians = (usersQuery.data ?? []).filter((u) => u.role === "technician");
 
   function invalidate() {
@@ -140,6 +170,24 @@ export function JobDetailPage() {
             >
               Complete Job
             </button>
+          )}
+          {job.status === "completed" && (
+            <button
+              type="button"
+              onClick={() => generateInvoiceMutation.mutate()}
+              disabled={generateInvoiceMutation.isPending}
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {generateInvoiceMutation.isPending ? "Generating…" : "Generate Invoice"}
+            </button>
+          )}
+          {job.status === "invoiced" && existingInvoice && (
+            <Link
+              to={`/invoices/${existingInvoice.id}`}
+              className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              View Invoice
+            </Link>
           )}
           {(job.status === "unscheduled" || job.status === "scheduled" || job.status === "in_progress") && (
             <button

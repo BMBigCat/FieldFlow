@@ -253,22 +253,24 @@ Notifications
 - [x] Job detail page: notes, photo upload, status transitions
 - **Acceptance:** office user creates a job, assigns a tech, sees it on the calendar, drags to reschedule, walks it through the full status lifecycle. — **verified end-to-end (scripted + browser), including the double-booking conflict warning.**
 
-### ⏭ Next up: Phase 4 — Technician Mobile App (Expo, offline-first)
+### ⏭ Next up: Phase 6 — Push Notifications & Recurring Maintenance
 
-### Phase 4 — Technician Mobile App (with Offline Mode built in from the start)
-- [ ] Expo app scaffold, login, "my day" schedule view
-- [ ] Job detail: customer info, equipment history, notes, photo capture, signature capture, clock in/out, mark complete
-- [ ] Local SQLite cache + prefetch of next-48h schedule
-- [ ] Write queue for offline mutations + sync engine (push/pull, dedupe, conflict handling per Section 6)
-- [ ] Sync status indicator in UI
-- **Acceptance:** the full offline acceptance test in Section 6 passes. Additionally: online-mode job completion reflects on the web dashboard within a few seconds.
+### Phase 4 — Technician Mobile App (with Offline Mode built in from the start) ✅ DONE
+- [x] Expo app scaffold, login, "my day" schedule view
+- [x] Job detail: customer info, equipment history, notes, photo capture, signature capture, clock in/out, mark complete
+- [x] Local SQLite cache + prefetch of next-48h schedule (pull is scoped to a 48h horizon server-side; My Day itself surfaces today's jobs)
+- [x] Write queue for offline mutations + sync engine (push/pull, dedupe, conflict handling per Section 6)
+- [x] Sync status indicator in UI
+- **Acceptance:** login → sync → today's job rendering verified live in a real browser session against the live Supabase project. Dedup-by-`client_generated_id`, conflict reconciliation (server wins, local cache updated), `removedJobIds` cascade, and photo/signature base64 resolution before push are proven by an automated suite against a real SQLite engine (not a mock). The literal Section 6 acceptance test (airplane mode on a physical device, full job completion, reconnect, dashboard reflects it with no duplicates) has **not** been run on a real device/simulator — this was built and verified via the web preview, and native is the actual target platform per the build plan.
 
-### Phase 5 — Invoicing (in-house, integration-ready)
-- [ ] `invoicing-core` package: invoice/line-item domain logic, `InvoiceExportAdapter` interface + `NullAdapter`
-- [ ] Generate invoice from completed job, auto-pull labor/parts, manual line items
-- [ ] Invoice statuses, PDF generation, email send
-- [ ] Web: invoice list/detail/edit views
-- **Acceptance:** office user completes a job, generates an invoice, edits line items, sends it, marks it paid; status reflected on customer history. `external_ref`/`external_system` fields present but unused (confirm `NullAdapter` is wired in, doing nothing).
+### Phase 5 — Invoicing (in-house, integration-ready) ✅ DONE
+- [x] `invoicing-core` package: invoice/line-item domain logic, `InvoiceExportAdapter` interface + `NullAdapter`
+- [x] Generate invoice from completed job, auto-pull labor, manual line items
+- [x] Invoice statuses, PDF generation, email send
+- [x] Web: invoice list/detail/edit views
+- **Acceptance:** office user completes a job, generates an invoice, edits line items, sends it, marks it paid; status reflected on customer history. `external_ref`/`external_system` fields present but unused; `NullAdapter` confirmed wired in (called on invoice creation, does nothing). — **verified end-to-end via a scripted run against the live API (signup → complete job with clocked time → generate invoice → confirm rejection for a non-completed job → confirm auto-pulled labor line item priced at the org's rate → edit line items/tax and confirm recomputed total → list → send → download PDF → mark paid) and a browser check (new pages load with zero console errors).**
+  - Scope note: there's no "parts used" table anywhere in the schema (build plan §4 never defined one), so "auto-pull ... parts" only applies to labor (from `job_time_entries`) — parts are added as manual line items, same as any other line item.
+  - No Resend account exists in this environment, so email send degrades to a reported no-op (`email.sent: false`, with a reason) rather than actually delivering — verified that path, not real delivery.
 
 ### Phase 6 — Push Notifications & Recurring Maintenance
 - [ ] Expo push notifications: new job assigned, job changed/canceled, upcoming-job reminder

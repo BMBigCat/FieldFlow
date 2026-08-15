@@ -23,3 +23,13 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
+
+/** Same auth as apiFetch, but for endpoints that return a binary body (e.g. invoice PDFs) instead of JSON. */
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const headers = await authHeader();
+  const response = await fetch(`${API_URL}${path}`, { headers });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.blob();
+}

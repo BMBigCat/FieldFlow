@@ -50,6 +50,11 @@ export function DashboardLayout() {
               Customers
             </Link>
           )}
+          {(user?.role === "admin" || user?.role === "office") && (
+            <Link to="/invoices" className="text-muted-foreground hover:text-foreground">
+              Invoices
+            </Link>
+          )}
           {user?.role === "admin" && (
             <Link to="/settings/organization" className="text-muted-foreground hover:text-foreground">
               Organization Settings

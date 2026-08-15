@@ -53,5 +53,5 @@ export interface WhoAmIResponse {
 
 /** PATCH /organizations/me (admin only) */
 export type UpdateOrganizationRequest = Partial<
-  Pick<Organization, "displayName" | "brandPrimaryColor">
+  Pick<Organization, "displayName" | "brandPrimaryColor" | "defaultLaborRate">
 >;

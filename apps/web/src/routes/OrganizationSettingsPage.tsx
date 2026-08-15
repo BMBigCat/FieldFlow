@@ -15,11 +15,13 @@ export function OrganizationSettingsPage() {
 
   const [displayName, setDisplayName] = useState("");
   const [brandColor, setBrandColor] = useState("#0f172a");
+  const [laborRate, setLaborRate] = useState("");
 
   useEffect(() => {
     if (orgQuery.data) {
       setDisplayName(orgQuery.data.displayName ?? "");
       setBrandColor(orgQuery.data.brandPrimaryColor ?? "#0f172a");
+      setLaborRate(orgQuery.data.defaultLaborRate != null ? String(orgQuery.data.defaultLaborRate) : "");
     }
   }, [orgQuery.data]);
 
@@ -32,7 +34,11 @@ export function OrganizationSettingsPage() {
     mutationFn: () =>
       apiFetch<Organization>("/organizations/me", {
         method: "PATCH",
-        body: JSON.stringify({ displayName, brandPrimaryColor: brandColor }),
+        body: JSON.stringify({
+          displayName,
+          brandPrimaryColor: brandColor,
+          ...(laborRate.trim() !== "" ? { defaultLaborRate: Number(laborRate) } : {}),
+        }),
       }),
     onSuccess: invalidateBranding,
   });
@@ -119,6 +125,24 @@ export function OrganizationSettingsPage() {
               className="mt-1 h-9 w-16 rounded border border-input bg-background"
             />
           </div>
+          <div>
+            <label htmlFor="laborRate" className="block text-sm font-medium text-foreground">
+              Default labor rate ($ / hour)
+            </label>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Prices the labor line item auto-generated on new invoices from a job's clocked time. Leave blank and
+              invoices will start with a $0 labor line you can edit by hand.
+            </p>
+            <input
+              id="laborRate"
+              type="number"
+              min={0}
+              step={0.01}
+              value={laborRate}
+              onChange={(event) => setLaborRate(event.target.value)}
+              className="mt-1 block w-32 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            />
+          </div>
           <button
             type="submit"
             disabled={updateOrgMutation.isPending}
@@ -187,8 +211,8 @@ export function OrganizationSettingsPage() {
         </form>
         {lastInvite && (
           <p className="mt-4 break-all rounded-md bg-muted p-3 text-xs text-muted-foreground">
-            No email provider is wired up yet (Phase 5) — share this link with {lastInvite.user.fullName} to set
-            their password: {lastInvite.actionLink}
+            Invites aren't emailed yet — share this link with {lastInvite.user.fullName} to set their password:{" "}
+            {lastInvite.actionLink}
           </p>
         )}
       </section>

@@ -1,4 +1,5 @@
 import type { ISODateString, UUID } from "./common.js";
+import type { Customer } from "./customer.js";
 
 /** Build plan §5 Phase 5 scope. */
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "void";
@@ -33,4 +34,45 @@ export interface InvoiceLineItem {
   quantity: number;
   unitPrice: number;
   kind: InvoiceLineItemKind;
+}
+
+/** POST /invoices — generates a draft invoice from a completed job. */
+export interface CreateInvoiceRequest {
+  jobId: UUID;
+}
+
+export interface InvoiceLineItemInput {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  kind: InvoiceLineItemKind;
+}
+
+/** PATCH /invoices/:id. `lineItems`, when present, replaces the full set. */
+export interface UpdateInvoiceRequest {
+  status?: InvoiceStatus;
+  tax?: number;
+  dueAt?: ISODateString;
+  lineItems?: InvoiceLineItemInput[];
+}
+
+/** GET /invoices — list view; full line items aren't needed there. */
+export interface InvoiceListItem extends Invoice {
+  customer: Pick<Customer, "id" | "name">;
+}
+
+/** GET /invoices/:id */
+export interface InvoiceDetail extends Invoice {
+  customer: Pick<Customer, "id" | "name">;
+  lineItems: InvoiceLineItem[];
+}
+
+/** POST /invoices/:id/send */
+export interface SendInvoiceResponse {
+  invoice: InvoiceDetail;
+  email: {
+    sent: boolean;
+    /** Present when sent is false — e.g. no email provider configured yet. */
+    reason?: string;
+  };
 }

@@ -24,6 +24,7 @@ export class OrganizationsService {
     const patch: Record<string, unknown> = { brand_updated_at: new Date().toISOString() };
     if (dto.displayName !== undefined) patch.display_name = dto.displayName;
     if (dto.brandPrimaryColor !== undefined) patch.brand_primary_color = dto.brandPrimaryColor;
+    if (dto.defaultLaborRate !== undefined) patch.default_labor_rate = dto.defaultLaborRate;
 
     const { data, error } = await scoped
       .from("organizations")
