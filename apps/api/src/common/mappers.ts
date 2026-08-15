@@ -16,6 +16,7 @@ import type {
   JobTimeEntry,
   JobType,
   Organization,
+  RecurringMaintenancePlan,
   ServiceAddress,
   User,
   UserRole,
@@ -352,5 +353,25 @@ export function toInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     quantity: row.quantity,
     unitPrice: row.unit_price,
     kind: row.kind,
+  };
+}
+
+interface RecurringMaintenancePlanRow {
+  id: string;
+  customer_id: string;
+  equipment_id: string;
+  frequency_months: number;
+  next_due_date: string;
+  job_template: Record<string, unknown>;
+}
+
+export function toRecurringMaintenancePlan(row: RecurringMaintenancePlanRow): RecurringMaintenancePlan {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    equipmentId: row.equipment_id,
+    frequencyMonths: row.frequency_months,
+    nextDueDate: row.next_due_date,
+    jobTemplate: row.job_template as RecurringMaintenancePlan["jobTemplate"],
   };
 }

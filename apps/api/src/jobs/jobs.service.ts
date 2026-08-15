@@ -14,6 +14,7 @@ import {
   toEquipment,
 } from "../common/mappers";
 import { SupabaseUserClientFactory } from "../supabase/supabase-user-client.factory";
+import { PushService } from "../notifications/push.service";
 import { ClockInDto } from "./dto/clock-in.dto";
 import { ClockOutDto } from "./dto/clock-out.dto";
 import { CreateJobDto } from "./dto/create-job.dto";
@@ -33,7 +34,10 @@ const ALLOWED_PHOTO_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly userClientFactory: SupabaseUserClientFactory) {}
+  constructor(
+    private readonly userClientFactory: SupabaseUserClientFactory,
+    private readonly pushService: PushService,
+  ) {}
 
   async list(user: RequestUser, filters: JobListFilters): Promise<JobListItem[]> {
     const scoped = this.userClientFactory.forToken(user.accessToken);
@@ -100,6 +104,11 @@ export class JobsService {
       if (assignError) {
         throw new InternalServerErrorException(assignError.message);
       }
+      await Promise.all(
+        dto.technicianIds.map((technicianId) =>
+          this.pushService.notify(scoped, technicianId, "job_assigned", { jobId: data.id }),
+        ),
+      );
     }
 
     return toJob(data);
@@ -155,6 +164,15 @@ export class JobsService {
     await this.getJobOrThrow(scoped, jobId);
 
     if (dto.technicianIds !== undefined) {
+      const { data: existingAssignments, error: existingError } = await scoped
+        .from("job_assignments")
+        .select("technician_id")
+        .eq("job_id", jobId);
+      if (existingError) {
+        throw new InternalServerErrorException(existingError.message);
+      }
+      const previouslyAssignedIds = new Set((existingAssignments ?? []).map((a: { technician_id: string }) => a.technician_id));
+
       const { error: deleteError } = await scoped.from("job_assignments").delete().eq("job_id", jobId);
       if (deleteError) {
         throw new InternalServerErrorException(deleteError.message);
@@ -167,6 +185,11 @@ export class JobsService {
           throw new InternalServerErrorException(insertError.message);
         }
       }
+
+      const newlyAssigned = dto.technicianIds.filter((id) => !previouslyAssignedIds.has(id));
+      await Promise.all(
+        newlyAssigned.map((technicianId) => this.pushService.notify(scoped, technicianId, "job_assigned", { jobId })),
+      );
     }
 
     const patch: Record<string, unknown> = {};
@@ -177,6 +200,16 @@ export class JobsService {
     if (dto.scheduledEnd !== undefined) patch.scheduled_end = dto.scheduledEnd;
     if (dto.actualStart !== undefined) patch.actual_start = dto.actualStart;
     if (dto.actualEnd !== undefined) patch.actual_end = dto.actualEnd;
+
+    if (dto.status === "canceled" || dto.scheduledStart !== undefined || dto.scheduledEnd !== undefined) {
+      const { data: currentAssignments } = await scoped.from("job_assignments").select("technician_id").eq("job_id", jobId);
+      const notificationType = dto.status === "canceled" ? "job_canceled" : "job_changed";
+      await Promise.all(
+        (currentAssignments ?? []).map((a: { technician_id: string }) =>
+          this.pushService.notify(scoped, a.technician_id, notificationType, { jobId }),
+        ),
+      );
+    }
 
     if (Object.keys(patch).length === 0) {
       const { data, error } = await scoped.from("jobs").select("*").eq("id", jobId).single();

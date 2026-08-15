@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { JobsService } from "./jobs.service";
+import { PushService } from "../notifications/push.service";
 import { SupabaseUserClientFactory } from "../supabase/supabase-user-client.factory";
 import type { RequestUser } from "../auth/request-user";
 
@@ -48,6 +49,7 @@ describe("JobsService", () => {
   let userClientFactory: { forToken: jest.Mock };
   let fromMock: jest.Mock;
   let storageFromMock: jest.Mock;
+  let pushService: { notify: jest.Mock };
 
   beforeEach(async () => {
     fromMock = jest.fn();
@@ -55,9 +57,16 @@ describe("JobsService", () => {
     userClientFactory = {
       forToken: jest.fn().mockReturnValue({ from: fromMock, storage: { from: storageFromMock } }),
     };
+    // Mocked (not touching fromMock) so it doesn't perturb the fromMock call
+    // sequencing every other test in this file relies on.
+    pushService = { notify: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [JobsService, { provide: SupabaseUserClientFactory, useValue: userClientFactory }],
+      providers: [
+        JobsService,
+        { provide: SupabaseUserClientFactory, useValue: userClientFactory },
+        { provide: PushService, useValue: pushService },
+      ],
     }).compile();
 
     service = module.get(JobsService);
@@ -136,6 +145,8 @@ describe("JobsService", () => {
       { job_id: "job-1", technician_id: "tech-1" },
       { job_id: "job-1", technician_id: "tech-2" },
     ]);
+    expect(pushService.notify).toHaveBeenCalledWith(expect.anything(), "tech-1", "job_assigned", { jobId: "job-1" });
+    expect(pushService.notify).toHaveBeenCalledWith(expect.anything(), "tech-2", "job_assigned", { jobId: "job-1" });
   });
 
   it("getDetail maps nested customer/serviceAddress/equipment/assignedTechnicians/notes/photos", async () => {
@@ -176,31 +187,65 @@ describe("JobsService", () => {
     expect(result.status).toBe("in_progress");
   });
 
-  it("update replaces the full assignment set when technicianIds is provided", async () => {
+  it("update replaces the full assignment set when technicianIds is provided, notifying only newly-added technicians", async () => {
     fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    const existingBuilder = makeQueryBuilder({ data: [{ technician_id: "tech-1" }], error: null }); // already assigned
     const deleteBuilder = makeQueryBuilder({ data: null, error: null });
     const insertBuilder = makeQueryBuilder({ data: null, error: null });
     const selectBuilder = makeQueryBuilder({ data: baseJobRow, error: null }); // no other patch fields -> plain select
-    fromMock.mockReturnValueOnce(deleteBuilder).mockReturnValueOnce(insertBuilder).mockReturnValueOnce(selectBuilder);
+    fromMock
+      .mockReturnValueOnce(existingBuilder)
+      .mockReturnValueOnce(deleteBuilder)
+      .mockReturnValueOnce(insertBuilder)
+      .mockReturnValueOnce(selectBuilder);
 
-    await service.update(requestUser, "job-1", { technicianIds: ["tech-1"] });
+    await service.update(requestUser, "job-1", { technicianIds: ["tech-1", "tech-2"] });
 
     expect(deleteBuilder.delete).toHaveBeenCalled();
-    expect(insertBuilder.insert).toHaveBeenCalledWith([{ job_id: "job-1", technician_id: "tech-1" }]);
+    expect(insertBuilder.insert).toHaveBeenCalledWith([
+      { job_id: "job-1", technician_id: "tech-1" },
+      { job_id: "job-1", technician_id: "tech-2" },
+    ]);
     expect(selectBuilder.update).not.toHaveBeenCalled();
+    // tech-1 was already assigned — only the newly-added tech-2 gets notified.
+    expect(pushService.notify).toHaveBeenCalledTimes(1);
+    expect(pushService.notify).toHaveBeenCalledWith(expect.anything(), "tech-2", "job_assigned", { jobId: "job-1" });
   });
 
   it("update clears all assignments when technicianIds is an empty array", async () => {
     fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    const existingBuilder = makeQueryBuilder({ data: [], error: null });
     const deleteBuilder = makeQueryBuilder({ data: null, error: null });
     const selectBuilder = makeQueryBuilder({ data: baseJobRow, error: null });
-    fromMock.mockReturnValueOnce(deleteBuilder).mockReturnValueOnce(selectBuilder);
+    fromMock.mockReturnValueOnce(existingBuilder).mockReturnValueOnce(deleteBuilder).mockReturnValueOnce(selectBuilder);
 
     await service.update(requestUser, "job-1", { technicianIds: [] });
 
     expect(deleteBuilder.delete).toHaveBeenCalled();
-    // second from() call is the plain select, not a job_assignments insert
-    expect(fromMock).toHaveBeenCalledTimes(3);
+    expect(fromMock).toHaveBeenCalledTimes(4);
+    expect(pushService.notify).not.toHaveBeenCalled();
+  });
+
+  it("update notifies currently-assigned technicians with job_canceled when status becomes canceled", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    const currentAssignmentsBuilder = makeQueryBuilder({ data: [{ technician_id: "tech-1" }], error: null });
+    const updateBuilder = makeQueryBuilder({ data: { ...baseJobRow, status: "canceled" }, error: null });
+    fromMock.mockReturnValueOnce(currentAssignmentsBuilder).mockReturnValueOnce(updateBuilder);
+
+    await service.update(requestUser, "job-1", { status: "canceled" });
+
+    expect(pushService.notify).toHaveBeenCalledWith(expect.anything(), "tech-1", "job_canceled", { jobId: "job-1" });
+  });
+
+  it("update notifies currently-assigned technicians with job_changed on reschedule", async () => {
+    fromMock.mockReturnValueOnce(makeQueryBuilder({ data: { id: "job-1" }, error: null })); // getJobOrThrow
+    const currentAssignmentsBuilder = makeQueryBuilder({ data: [{ technician_id: "tech-1" }], error: null });
+    const updateBuilder = makeQueryBuilder({ data: baseJobRow, error: null });
+    fromMock.mockReturnValueOnce(currentAssignmentsBuilder).mockReturnValueOnce(updateBuilder);
+
+    await service.update(requestUser, "job-1", { scheduledStart: "2026-03-01T09:00:00Z" });
+
+    expect(pushService.notify).toHaveBeenCalledWith(expect.anything(), "tech-1", "job_changed", { jobId: "job-1" });
   });
 
   it("update throws NotFoundException when the job doesn't exist", async () => {

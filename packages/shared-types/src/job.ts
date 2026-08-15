@@ -197,3 +197,19 @@ export interface RecurringMaintenancePlan {
    */
   jobTemplate: Partial<Pick<Job, "type" | "priority" | "description">>;
 }
+
+/** POST /maintenance-plans */
+export interface CreateMaintenancePlanRequest {
+  customerId: UUID;
+  equipmentId: UUID;
+  frequencyMonths: number;
+  nextDueDate: ISODateString;
+  jobTemplate?: Partial<Pick<Job, "type" | "priority" | "description">>;
+}
+
+/** POST /maintenance-plans/process-due response — build plan §6 background
+ * job, triggered manually here (no BullMQ/Redis available yet — see build
+ * plan §6.2 decision note) rather than on a real schedule. */
+export interface ProcessDuePlansResponse {
+  createdJobIds: UUID[];
+}

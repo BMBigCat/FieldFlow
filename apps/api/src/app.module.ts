@@ -5,6 +5,8 @@ import { CustomersModule } from "./customers/customers.module";
 import { HealthModule } from "./health/health.module";
 import { InvoicesModule } from "./invoices/invoices.module";
 import { JobsModule } from "./jobs/jobs.module";
+import { MaintenancePlansModule } from "./maintenance-plans/maintenance-plans.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
 import { SupabaseModule } from "./supabase/supabase.module";
 import { SyncModule } from "./sync/sync.module";
@@ -25,6 +27,8 @@ import { UsersModule } from "./users/users.module";
     JobsModule,
     SyncModule,
     InvoicesModule,
+    NotificationsModule,
+    MaintenancePlansModule,
   ],
 })
 export class AppModule {}

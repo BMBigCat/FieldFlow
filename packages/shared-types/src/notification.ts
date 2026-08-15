@@ -18,3 +18,8 @@ export interface NotificationLog {
   sentAt: ISODateString;
   readAt: ISODateString | null;
 }
+
+/** POST /notifications/register-push-token */
+export interface RegisterPushTokenRequest {
+  pushToken: string;
+}

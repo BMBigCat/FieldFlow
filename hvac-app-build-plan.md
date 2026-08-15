@@ -253,7 +253,7 @@ Notifications
 - [x] Job detail page: notes, photo upload, status transitions
 - **Acceptance:** office user creates a job, assigns a tech, sees it on the calendar, drags to reschedule, walks it through the full status lifecycle. — **verified end-to-end (scripted + browser), including the double-booking conflict warning.**
 
-### ⏭ Next up: Phase 6 — Push Notifications & Recurring Maintenance
+### ⏭ Next up: Phase 7 (stretch) — External Integrations, Payments & Reporting (or circle back to close out Phase 6's BullMQ/scheduling gap first)
 
 ### Phase 4 — Technician Mobile App (with Offline Mode built in from the start) ✅ DONE
 - [x] Expo app scaffold, login, "my day" schedule view
@@ -272,10 +272,11 @@ Notifications
   - Scope note: there's no "parts used" table anywhere in the schema (build plan §4 never defined one), so "auto-pull ... parts" only applies to labor (from `job_time_entries`) — parts are added as manual line items, same as any other line item.
   - No Resend account exists in this environment, so email send degrades to a reported no-op (`email.sent: false`, with a reason) rather than actually delivering — verified that path, not real delivery.
 
-### Phase 6 — Push Notifications & Recurring Maintenance
-- [ ] Expo push notifications: new job assigned, job changed/canceled, upcoming-job reminder
-- [ ] Recurring maintenance background job (BullMQ): auto-creates future jobs from `recurring_maintenance_plans`, notifies office to confirm/schedule
-- **Acceptance:** assigning a job triggers a push notification on the tech's device; a due recurring plan auto-creates a new unscheduled job.
+### Phase 6 — Push Notifications & Recurring Maintenance 🟡 PARTIAL (quick checkpoint — see notes)
+- [x] Expo push notifications: new job assigned, job changed/canceled. Register-token endpoint, a send+log service (always logs to `notifications_log` per build plan §4, best-effort sends via Expo if a token is on file), wired into job assignment/reschedule/cancel. `job_reminder` (upcoming-job) not implemented — it needs a scheduled trigger, same gap as below.
+- [ ] Recurring maintenance background job (BullMQ): the logic itself is done and verified (finds due plans, creates the next unscheduled job from the template, advances `next_due_date`) — but there's **no BullMQ/Redis** in this environment (no Upstash instance was ever configured, see project start), so nothing runs it on a schedule. Exposed instead as a manually-triggered `POST /maintenance-plans/process-due`. Notifying office on auto-created plans skipped — no `notification_type` enum value fits it without a schema change.
+- **Acceptance:** partially met. Assigning/rescheduling/canceling a job correctly logs the notification and attempts a real Expo push send — verified via a scripted run (`notifications_log` entries), but actual delivery to a device is unverified (no physical device or EAS project in this environment; `getExpoPushTokenAsync` needs a real `projectId`). A due recurring plan does auto-create a new unscheduled job with the correct fields and correctly advances its due date — verified via script — but only when `process-due` is called, not on a real automatic schedule.
+- **Follow-up when there's a real need for it:** set up Upstash Redis + BullMQ (or a simpler cron), wire it to call `MaintenancePlansService.processDue()` on a schedule and `job_reminder` sends ahead of `scheduledStart`; test push delivery on an actual device once an EAS project exists.
 
 ### Phase 7 (stretch) — External Integrations, Payments & Reporting
 - [ ] Implement `QuickBooksAdapter` (and/or `XeroAdapter`) behind the existing `InvoiceExportAdapter` interface; per-org setting to enable

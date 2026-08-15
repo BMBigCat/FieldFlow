@@ -4,6 +4,7 @@ import type { WhoAmIResponse } from "@fieldflow/shared-types";
 import { runSync } from "./sync-engine";
 import { apiFetch } from "./api";
 import { useAuth } from "./auth-context";
+import { registerForPushNotifications } from "./push-notifications";
 import * as repo from "../db/repo";
 
 type SyncStatus = "idle" | "syncing" | "offline";
@@ -68,6 +69,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
     triggerSync();
     refreshPendingCount();
+    registerForPushNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
