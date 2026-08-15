@@ -3,9 +3,15 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "C:\\Users\\TeamFreshwater-Clean\\AppData\\Roaming\\npm\\pnpm.CMD",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@fieldflow/web", "dev"],
       "port": 5173
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@fieldflow/mobile", "web", "--", "--port", "8081"],
+      "port": 8081
     }
   ]
 }

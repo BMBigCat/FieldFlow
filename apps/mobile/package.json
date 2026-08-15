@@ -1,10 +1,51 @@
 {
   "name": "@fieldflow/mobile",
   "version": "0.0.0",
-  "private": true,
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.10",
+    "@fieldflow/shared-types": "workspace:*",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/netinfo": "12.0.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "expo": "~57.0.13",
+    "expo-constants": "~57.0.11",
+    "expo-crypto": "~57.0.1",
+    "expo-file-system": "~57.0.4",
+    "expo-image-picker": "~57.0.10",
+    "expo-linking": "~57.0.6",
+    "expo-router": "~57.0.13",
+    "expo-sqlite": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-view-shot": "5.1.0",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.9.0",
+    "@types/react": "~19.2.2",
+    "@types/sql.js": "^1.4.11",
+    "dotenv": "^16.4.5",
+    "jest": "^29.7.0",
+    "sql.js": "^1.14.2",
+    "ts-jest": "^29.2.5",
+    "typescript": "~6.0.3"
+  },
   "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
     "lint": "echo \"apps/mobile: nothing to lint yet\" && exit 0",
-    "typecheck": "echo \"apps/mobile: nothing to typecheck yet\" && exit 0",
-    "test": "echo \"apps/mobile: nothing to test yet\" && exit 0"
-  }
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "private": true
 }
