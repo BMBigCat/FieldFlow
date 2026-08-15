@@ -10,6 +10,7 @@ const TITLE: Record<NotificationType, string> = {
   job_reminder: "Upcoming job",
   job_completed: "Job completed",
   tech_running_behind: "Technician running behind",
+  maintenance_auto_scheduled: "Recurring maintenance scheduled",
 };
 
 const expo = new Expo();

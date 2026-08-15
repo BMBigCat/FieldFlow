@@ -253,7 +253,7 @@ Notifications
 - [x] Job detail page: notes, photo upload, status transitions
 - **Acceptance:** office user creates a job, assigns a tech, sees it on the calendar, drags to reschedule, walks it through the full status lifecycle. — **verified end-to-end (scripted + browser), including the double-booking conflict warning.**
 
-### ⏭ Next up: Phase 7 (stretch) — External Integrations, Payments & Reporting (or circle back to close out Phase 6's BullMQ/scheduling gap first)
+### ⏭ Next up: Phase 7 (stretch) remainder — QuickBooks/Xero, Stripe, and customer-facing SMS/email reminders all need real third-party accounts/credentials before they can be built for real.
 
 ### Phase 4 — Technician Mobile App (with Offline Mode built in from the start) ✅ DONE
 - [x] Expo app scaffold, login, "my day" schedule view
@@ -272,17 +272,18 @@ Notifications
   - Scope note: there's no "parts used" table anywhere in the schema (build plan §4 never defined one), so "auto-pull ... parts" only applies to labor (from `job_time_entries`) — parts are added as manual line items, same as any other line item.
   - No Resend account exists in this environment, so email send degrades to a reported no-op (`email.sent: false`, with a reason) rather than actually delivering — verified that path, not real delivery.
 
-### Phase 6 — Push Notifications & Recurring Maintenance 🟡 PARTIAL (quick checkpoint — see notes)
-- [x] Expo push notifications: new job assigned, job changed/canceled. Register-token endpoint, a send+log service (always logs to `notifications_log` per build plan §4, best-effort sends via Expo if a token is on file), wired into job assignment/reschedule/cancel. `job_reminder` (upcoming-job) not implemented — it needs a scheduled trigger, same gap as below.
-- [ ] Recurring maintenance background job (BullMQ): the logic itself is done and verified (finds due plans, creates the next unscheduled job from the template, advances `next_due_date`) — but there's **no BullMQ/Redis** in this environment (no Upstash instance was ever configured, see project start), so nothing runs it on a schedule. Exposed instead as a manually-triggered `POST /maintenance-plans/process-due`. Notifying office on auto-created plans skipped — no `notification_type` enum value fits it without a schema change.
-- **Acceptance:** partially met. Assigning/rescheduling/canceling a job correctly logs the notification and attempts a real Expo push send — verified via a scripted run (`notifications_log` entries), but actual delivery to a device is unverified (no physical device or EAS project in this environment; `getExpoPushTokenAsync` needs a real `projectId`). A due recurring plan does auto-create a new unscheduled job with the correct fields and correctly advances its due date — verified via script — but only when `process-due` is called, not on a real automatic schedule.
-- **Follow-up when there's a real need for it:** set up Upstash Redis + BullMQ (or a simpler cron), wire it to call `MaintenancePlansService.processDue()` on a schedule and `job_reminder` sends ahead of `scheduledStart`; test push delivery on an actual device once an EAS project exists.
+### Phase 6 — Push Notifications & Recurring Maintenance ✅ DONE
+- [x] Expo push notifications: new job assigned, job changed/canceled, `job_reminder` (upcoming-job, ~1h lead time). Register-token endpoint, a send+log service (always logs to `notifications_log` per build plan §4, best-effort sends via Expo if a token is on file), wired into job assignment/reschedule/cancel plus a scheduled reminder scan.
+- [x] Recurring maintenance background job: now runs for real on **Upstash Redis + BullMQ** (`apps/api/src/queue`, `apps/api/src/scheduling`) — an hourly repeatable job (`RecurringMaintenanceProcessor`) calls `MaintenancePlansService.processDueAllOrgs()` (service-role client, iterates every org at once since no HTTP-request user drives a cron tick), and a 15-minute repeatable job (`JobReminderProcessor`) sends `job_reminder` pushes. The manual `POST /maintenance-plans/process-due` endpoint (single-org, user-scoped) is kept alongside it for ops/debugging. `upsertJobScheduler` makes both idempotent across redeploys.
+- [x] Office notified on auto-created recurring-maintenance jobs: added `maintenance_auto_scheduled` to the `notification_type` enum (migration `0009`) and to every admin/office user in the org when a plan fires.
+- **Acceptance:** met for the logic and real scheduling. Assigning/rescheduling/canceling a job correctly logs the notification and attempts a real Expo push send — verified via a scripted run (`notifications_log` entries) — but actual delivery to a device remains unverified (no physical device or EAS project in this environment; `getExpoPushTokenAsync` needs a real `projectId`). Recurring-maintenance and job-reminder logic verified via unit tests (`maintenance-plans.service.spec.ts`, `job-reminder.service.spec.ts`) and via booting the API against the live Upstash instance and confirming both repeatable job schedulers register in Redis (`bull:recurring-maintenance:repeat:*`, `bull:job-reminders:repeat:*`) — actual scheduled *fires* weren't waited out live (hourly/15-min cadence), so watch the first few real runs in production logs.
+- **Follow-up when there's a real need for it:** test push delivery on an actual device once an EAS project exists.
 
-### Phase 7 (stretch) — External Integrations, Payments & Reporting
-- [ ] Implement `QuickBooksAdapter` (and/or `XeroAdapter`) behind the existing `InvoiceExportAdapter` interface; per-org setting to enable
-- [ ] Real payment processor (Stripe) for online invoice payment
-- [ ] Basic reporting dashboard: jobs completed per tech, revenue per period, overdue invoices
-- [ ] Foundation for customer-facing appointment reminders (SMS/email)
+### Phase 7 (stretch) — External Integrations, Payments & Reporting 🟡 PARTIAL
+- [x] Basic reporting dashboard: jobs completed per tech, revenue per period (paid invoices by `paidAt`), overdue invoices (`status=overdue` plus any `sent` invoice past its `dueAt`, since nothing auto-flips that status). `GET /reports/summary?from=&to=` (admin/office only, RLS-scoped), web page at `/reports` with a date-range filter. Verified end-to-end against the live API/Supabase project (seeded a technician, customer, completed job, paid invoice, and a past-due sent invoice; confirmed the numbers and the date filter both server-side and in the browser).
+- [ ] Implement `QuickBooksAdapter` (and/or `XeroAdapter`) behind the existing `InvoiceExportAdapter` interface; per-org setting to enable — **blocked on real QuickBooks/Xero developer credentials**
+- [ ] Real payment processor (Stripe) for online invoice payment — **blocked on a real Stripe account**
+- [ ] Foundation for customer-facing appointment reminders (SMS/email) — **blocked on a real SMS provider (e.g. Twilio) account**
 
 ---
 

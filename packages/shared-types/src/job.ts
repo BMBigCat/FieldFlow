@@ -208,8 +208,9 @@ export interface CreateMaintenancePlanRequest {
 }
 
 /** POST /maintenance-plans/process-due response — build plan §6 background
- * job, triggered manually here (no BullMQ/Redis available yet — see build
- * plan §6.2 decision note) rather than on a real schedule. */
+ * job. This manual-trigger endpoint processes just the caller's own org, on
+ * demand; the real scheduled path (all orgs, hourly via BullMQ) lives in
+ * apps/api/src/scheduling. */
 export interface ProcessDuePlansResponse {
   createdJobIds: UUID[];
 }

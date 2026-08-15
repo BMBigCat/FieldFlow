@@ -7,7 +7,8 @@ export type NotificationType =
   | "job_canceled"
   | "job_reminder"
   | "job_completed"
-  | "tech_running_behind";
+  | "tech_running_behind"
+  | "maintenance_auto_scheduled";
 
 /** Build plan §4 `notifications_log`. */
 export interface NotificationLog {

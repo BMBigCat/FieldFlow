@@ -6,4 +6,5 @@ export * from "./customer.js";
 export * from "./job.js";
 export * from "./invoice.js";
 export * from "./notification.js";
+export * from "./report.js";
 export * from "./sync.js";

@@ -8,6 +8,8 @@ import { JobsModule } from "./jobs/jobs.module";
 import { MaintenancePlansModule } from "./maintenance-plans/maintenance-plans.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
+import { ReportsModule } from "./reports/reports.module";
+import { SchedulingModule } from "./scheduling/scheduling.module";
 import { SupabaseModule } from "./supabase/supabase.module";
 import { SyncModule } from "./sync/sync.module";
 import { UsersModule } from "./users/users.module";
@@ -29,6 +31,8 @@ import { UsersModule } from "./users/users.module";
     InvoicesModule,
     NotificationsModule,
     MaintenancePlansModule,
+    SchedulingModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}
